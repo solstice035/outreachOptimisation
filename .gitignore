@@ -1,0 +1,22 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Temporary files
+*~
+~$*
+*.tmp
+.DS_Store
+
+# Data Files
+*.csv
+*.xls*
