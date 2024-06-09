@@ -10,6 +10,9 @@ __pycache__/
 # .env
 .env
 
+# Log files
+*.log
+
 # Visual Studio Code
 .vscode/
 *.code-workspace
