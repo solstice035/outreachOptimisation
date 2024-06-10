@@ -74,8 +74,7 @@ def process_engagement_data(
 
         # Load the Excel data into a DataFrame using Dask for parallel processing
         start_time = time.time()
-        df_raw = dd.read_excel(file_path, skiprows=start_row)
-        df_raw = df_raw.compute()  # Convert Dask DataFrame to Pandas DataFrame
+        df_raw = dd.read_excel(file_path, skiprows=start_row).compute()
         logger.info(f"Data loaded with shape: {df_raw.shape}")
         logger.info(f"Data loading time: {time.time() - start_time:.2f} seconds")
 
@@ -108,7 +107,6 @@ def process_engagement_data(
         df_filtered["Data Date"] = df_filtered["Last Time Charged Date"].max()
 
         # Calculate the age of ETC in days using date offset
-        df_filtered["Last ETC Date"] = pd.to_datetime(df_filtered["Last ETC Date"])
         df_filtered["ETC Age"] = (
             df_filtered["Data Date"] - df_filtered["Last ETC Date"]
         ).dt.days
