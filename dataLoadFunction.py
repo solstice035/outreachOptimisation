@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import logging
-import dask.dataframe as dd
 import time
 
 
@@ -78,9 +77,6 @@ def process_engagement_data(
         logger.info(f"Data loaded with shape: {df_raw.shape}")
         logger.info(f"Data loading time: {time.time() - start_time:.2f} seconds")
 
-        # Convert to Dask DataFrame for parallel processing
-        df_raw = dd.from_pandas(df_raw, npartitions=4)
-
         # Reduce columns to only the ones needed
         start_time = time.time()
         df_filtered = df_raw[keep_cols]
@@ -88,14 +84,14 @@ def process_engagement_data(
         logger.info(f"Column reduction time: {time.time() - start_time:.2f} seconds")
 
         # Ensure the column to be filtered is of string type
-        df_filtered["Engagement Partner Service Line"] = df_filtered[
-            "Engagement Partner Service Line"
+        df_filtered.loc[:, "Engagement Partner Service Line"] = df_filtered.loc[
+            :, "Engagement Partner Service Line"
         ].astype(str)
 
         # Filter the data
         df_filtered = df_filtered[
             (
-                df_filtered["Engagement Partner Service Line"].str.lower()
+                df_filtered.loc[:, "Engagement Partner Service Line"].str.lower()
                 == service_line.lower()
             )
             & (df_filtered["Engagement Status"] == "Released")
@@ -104,40 +100,27 @@ def process_engagement_data(
 
         # Convert date columns to datetime in a single step
         start_time = time.time()
-
-        def convert_to_datetime(df, cols):
-            for col in cols:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
-            return df
-
-        df_filtered = df_filtered.map_partitions(convert_to_datetime, cols=date_cols)
+        for col in date_cols:
+            df_filtered[col] = pd.to_datetime(df_filtered[col], errors="coerce")
         logger.info(f"Date conversion time: {time.time() - start_time:.2f} seconds")
 
-        # Add temporary calculated columns
+        # Add calculated columns
         start_time = time.time()
         df_filtered["Last ETC Date"] = df_filtered["Last Active ETC-P Date"].fillna(
             df_filtered["Release Date"]
         )
-        df_filtered["Report Date"] = (
-            df_filtered["Last Time Charged Date"].max().compute()
-        )
+        df_filtered["Report Date"] = df_filtered["Last Time Charged Date"].max()
 
         # Calculate the age of ETC in days using date offset
         df_filtered["ETC Age"] = (
             df_filtered["Report Date"] - df_filtered["Last ETC Date"]
         ).dt.days
 
-        # Compute the Dask DataFrame to get the final Pandas DataFrame
-        df_filtered = df_filtered.compute()
-
         # Reset index
         df_filtered.reset_index(drop=True, inplace=True)
         logger.info(
-            f"Temporary column addition and index reset time: {time.time() - start_time:.2f} seconds"
+            f"Calculated column additions and index reset time: {time.time() - start_time:.2f} seconds"
         )
-
-        # Log data types
-        logger.info(f"Data Types: {df_filtered.dtypes}")
 
         return df_filtered
 
