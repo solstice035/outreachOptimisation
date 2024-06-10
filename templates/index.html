@@ -7,14 +7,10 @@
         {{ form.file.label(class="form-label") }}
         {{ form.file(class="form-control") }}
     </div>
-    <button type="submit" class="btn btn-primary mb-4">Upload</button>
+    <button type="submit" class="btn btn-primary mb-4">Preview</button>
 </form>
 
 {% if table %}
-<h2>Preview of Uploaded Data (First 20 rows):</h2>
-<div class="table-responsive">
-    {{ table|safe }}
-</div>
 <form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
     <input type="hidden" name="file_path" value="{{ file_path }}">
     <div class="mb-3">
@@ -33,5 +29,9 @@
     </div>
     <button type="submit" class="btn btn-success mb-4">Process Data</button>
 </form>
+<h2>Preview of Uploaded Data (First 20 rows):</h2>
+<div class="table-responsive">
+    {{ table|safe }}
+</div>
 {% endif %}
 {% endblock %}

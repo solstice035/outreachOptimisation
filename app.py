@@ -5,6 +5,7 @@ import pandas as pd
 from forms import UploadForm
 from dataLoadFunction import process_engagement_data
 import logging
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -28,14 +29,12 @@ def index():
     if form.validate_on_submit():
         file = form.file.data
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{timestamp}_{filename}")
 
         file.save(file_path)
 
         try:
-            flash(
-                "File uploaded successfully. Previewing the first 20 rows.", "success"
-            )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
             return render_template(
@@ -59,16 +58,16 @@ def process():
     export_log = "export_log" in request.form
 
     try:
-        flash("Processing data...", "info")
         # Process the data
         df_processed = process_engagement_data(
             file_path, start_row=start_row, service_line=service_line
         )
-        flash("Data processed successfully.", "success")
 
         # Save processed data to a new Excel file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        processed_file_name = f"processed_data_{timestamp}.xlsx"
         processed_file_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], "processed_data.xlsx"
+            app.config["UPLOAD_FOLDER"], processed_file_name
         )
         df_processed.to_excel(processed_file_path, index=False)
 
@@ -76,17 +75,22 @@ def process():
         df_display = df_processed.head(20)
 
         if export_log:
+            log_file_name = f"app_{timestamp}.log"
+            os.rename(
+                os.path.join(app.config["LOG_FOLDER"], "app.log"),
+                os.path.join(app.config["LOG_FOLDER"], log_file_name),
+            )
             return render_template(
                 "processed.html",
                 table=df_display.to_html(classes="table table-striped"),
-                download_link=processed_file_path,
-                log_link=url_for("download_log"),
+                download_link=processed_file_name,
+                log_link=log_file_name,
             )
         else:
             return render_template(
                 "processed.html",
                 table=df_display.to_html(classes="table table-striped"),
-                download_link=processed_file_path,
+                download_link=processed_file_name,
             )
 
     except Exception as e:
@@ -94,10 +98,16 @@ def process():
         return redirect(url_for("index"))
 
 
-@app.route("/download_log")
-def download_log():
-    log_file_path = os.path.join(app.config["LOG_FOLDER"], "app.log")
-    return send_file(log_file_path, as_attachment=True)
+@app.route("/download/<filename>")
+def download(filename):
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    return send_file(file_path, as_attachment=True)
+
+
+@app.route("/download_log/<filename>")
+def download_log(filename):
+    file_path = os.path.join(app.config["LOG_FOLDER"], filename)
+    return send_file(file_path, as_attachment=True)
 
 
 if __name__ == "__main__":
