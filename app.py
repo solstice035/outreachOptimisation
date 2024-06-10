@@ -23,8 +23,13 @@ logging.basicConfig(
 )
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload():
     form = UploadForm()
     if form.validate_on_submit():
         file = form.file.data
@@ -40,17 +45,21 @@ def index():
             )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
+            service_lines = (
+                df_preview["Engagement Partner Service Line"].dropna().unique().tolist()
+            )
             return render_template(
-                "index.html",
+                "upload.html",
                 form=form,
                 table=df_preview.to_html(classes="table table-striped"),
                 file_path=file_path,
+                service_lines=service_lines,
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("upload"))
 
-    return render_template("index.html", form=form)
+    return render_template("upload.html", form=form)
 
 
 @app.route("/process", methods=["POST"])
@@ -81,6 +90,7 @@ def process():
 
         if export_log:
             log_file_name = f"app_{timestamp}.log"
+            logging.shutdown()
             os.rename(
                 os.path.join(app.config["LOG_FOLDER"], "app.log"),
                 os.path.join(app.config["LOG_FOLDER"], log_file_name),
@@ -100,7 +110,7 @@ def process():
 
     except Exception as e:
         flash(f"Error processing data: {str(e)}", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("upload"))
 
 
 @app.route("/download/<filename>")
@@ -113,6 +123,31 @@ def download(filename):
 def download_log(filename):
     file_path = os.path.join(app.config["LOG_FOLDER"], filename)
     return send_file(file_path, as_attachment=True)
+
+
+@app.route("/delegates")
+def delegates():
+    return render_template("delegates.html")
+
+
+@app.route("/etc_exception_application")
+def etc_exception_application():
+    return render_template("etc_exception_application.html")
+
+
+@app.route("/ep_approval")
+def ep_approval():
+    return render_template("ep_approval.html")
+
+
+@app.route("/finance_approval")
+def finance_approval():
+    return render_template("finance_approval.html")
+
+
+@app.route("/reports")
+def reports():
+    return render_template("reports.html")
 
 
 if __name__ == "__main__":
