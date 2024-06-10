@@ -22,6 +22,8 @@ logging.basicConfig(
     filename=os.path.join(app.config["LOG_FOLDER"], "app.log"), level=logging.INFO
 )
 
+static_service_lines = ["All", "CBS & Elim", "Assurance", "Consulting", "Tax", "SaT"]
+
 
 @app.route("/")
 def home():
@@ -45,21 +47,18 @@ def upload():
             )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
-            service_lines = (
-                df_preview["Engagement Partner Service Line"].dropna().unique().tolist()
-            )
             return render_template(
                 "upload.html",
                 form=form,
                 table=df_preview.to_html(classes="table table-striped"),
                 file_path=file_path,
-                service_lines=service_lines,
+                service_lines=static_service_lines,
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
             return redirect(url_for("upload"))
 
-    return render_template("upload.html", form=form)
+    return render_template("upload.html", form=form, service_lines=static_service_lines)
 
 
 @app.route("/process", methods=["POST"])
@@ -148,6 +147,11 @@ def finance_approval():
 @app.route("/reports")
 def reports():
     return render_template("reports.html")
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
 
 
 if __name__ == "__main__":
