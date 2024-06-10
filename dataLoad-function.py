@@ -6,7 +6,12 @@ import time
 
 
 def process_engagement_data(
-    file_path, start_row=0, keep_cols=None, date_cols=None, verbose=True
+    file_path,
+    start_row=0,
+    keep_cols=None,
+    date_cols=None,
+    service_line="Consulting",
+    verbose=True,
 ):
     """
     Processes an Excel file containing engagement data, filters and formats the data, and adds calculated columns.
@@ -16,6 +21,7 @@ def process_engagement_data(
         start_row (int, optional): The row to start reading data from. Defaults to 0.
         keep_cols (list, optional): List of columns to keep. Defaults to a predefined list.
         date_cols (list, optional): List of columns to convert to datetime. Defaults to a predefined list.
+        service_line (str, optional): The service line to filter by. Defaults to 'Consulting'.
         verbose (bool, optional): If True, print and log additional information. Defaults to True.
 
     Returns:
@@ -50,6 +56,8 @@ def process_engagement_data(
             "Engagement Partner GUI",
             "Engagement Manager",
             "Engagement Manager GUI",
+            "Engagement Partner Service Line",
+            "Engagement Status",
         ]
 
     if date_cols is None:
@@ -76,6 +84,16 @@ def process_engagement_data(
         df_filtered = df_raw[keep_cols]
         logger.info(f"Data reduced with shape: {df_filtered.shape}")
         logger.info(f"Column reduction time: {time.time() - start_time:.2f} seconds")
+
+        # Filter the data
+        df_filtered = df_filtered[
+            (
+                df_filtered["Engagement Partner Service Line"].str.lower()
+                == service_line.lower()
+            )
+            & (df_filtered["Engagement Status"] == "Released")
+        ]
+        logger.info(f"Data filtered with shape: {df_filtered.shape}")
 
         # Convert date columns to datetime in a single step
         start_time = time.time()
