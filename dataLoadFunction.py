@@ -74,13 +74,13 @@ def process_engagement_data(
         # Load the Excel data into a DataFrame
         start_time = time.time()
         df_raw = pd.read_excel(file_path, skiprows=start_row)
-        logger.info(f"Data loaded with shape: {df_raw.shape}")
+        logger.info(f"Data loaded with shape (rows and columns): {df_raw.shape}")
         logger.info(f"Data loading time: {time.time() - start_time:.2f} seconds")
 
         # Reduce columns to only the ones needed
         start_time = time.time()
         df_filtered = df_raw[keep_cols]
-        logger.info(f"Data reduced with shape: {df_filtered.shape}")
+        logger.info(f"Data reduced to key columns only: {df_filtered.shape}")
         logger.info(f"Column reduction time: {time.time() - start_time:.2f} seconds")
 
         # Ensure the column to be filtered is of string type
@@ -96,16 +96,16 @@ def process_engagement_data(
             )
             & (df_filtered["Engagement Status"] == "Released")
         ]
-        logger.info(f"Data filtered with shape: {df_filtered.shape}")
+        logger.info(
+            f"Data filtered by EP service line and released eng. codes only. Filtered data shape: {df_filtered.shape}"
+        )
 
         # Convert date columns to datetime in a single step
         start_time = time.time()
         for col in date_cols:
             df_filtered[col] = pd.to_datetime(df_filtered[col], errors="coerce")
-        logger.info(f"Date conversion time: {time.time() - start_time:.2f} seconds")
 
         # Add calculated columns
-        start_time = time.time()
         df_filtered["Last ETC Date"] = df_filtered["Last Active ETC-P Date"].fillna(
             df_filtered["Release Date"]
         )
@@ -119,7 +119,7 @@ def process_engagement_data(
         # Reset index
         df_filtered.reset_index(drop=True, inplace=True)
         logger.info(
-            f"Calculated column additions and index reset time: {time.time() - start_time:.2f} seconds"
+            f"Added calculated columns, new data shape: {df_filtered.shape} and time taken: {time.time() - start_time:.2f} seconds"
         )
 
         return df_filtered
