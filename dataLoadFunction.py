@@ -87,10 +87,8 @@ def process_engagement_data(
         # Filter the data
         df_filtered = df_filtered[
             (
-                df_filtered["Engagement Partner Service Line"].str.lower()
-                == service_line.lower()
-            )
-            & (df_filtered["Engagement Status"] == "Released")
+                df_filtered["Engagement Partner Service Line"].str.lower() == service_line.lower()
+            ) & (df_filtered["Engagement Status"] == "Released")
         ]
         logger.info(f"Data filtered with shape: {df_filtered.shape}")
 
