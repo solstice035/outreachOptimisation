@@ -3,19 +3,23 @@ from unittest.mock import patch
 import pandas as pd
 from dataLoadFunction import (
     process_engagement_data,
-)  # replace 'dataLoadFunction' with the actual module name
+)  # Replace 'dataLoadFunction' with the actual module name
 
 
 class TestProcessEngagementData(unittest.TestCase):
 
+    @patch("dataLoadFunction.os.path.exists")
     @patch("dataLoadFunction.pd.read_excel")
-    def test_successful_processing(self, mock_read_excel):
+    def test_successful_processing(self, mock_read_excel, mock_path_exists):
         """
         Test successful processing with default service line filter.
 
         Mocks the data to be returned by pd.read_excel and checks the resulting
         DataFrame is correctly processed and filtered.
         """
+        # Mock the file existence check
+        mock_path_exists.return_value = True
+
         # Mock the data to be returned by pd.read_excel
         mock_data = {
             "Engagement ID": [1, 2],
@@ -52,14 +56,18 @@ class TestProcessEngagementData(unittest.TestCase):
             ).days,
         )
 
+    @patch("dataLoadFunction.os.path.exists")
     @patch("dataLoadFunction.pd.read_excel")
-    def test_custom_service_line_filter(self, mock_read_excel):
+    def test_custom_service_line_filter(self, mock_read_excel, mock_path_exists):
         """
         Test processing with a custom service line filter.
 
         Mocks the data to be returned by pd.read_excel and checks the resulting
         DataFrame is correctly filtered based on the custom service line.
         """
+        # Mock the file existence check
+        mock_path_exists.return_value = True
+
         # Mock the data to be returned by pd.read_excel
         mock_data = {
             "Engagement ID": [1, 2],
@@ -93,13 +101,16 @@ class TestProcessEngagementData(unittest.TestCase):
             df_processed["Engagement Partner Service Line"].iloc[0], "Advisory"
         )
 
+    @patch("dataLoadFunction.os.path.exists")
     @patch("dataLoadFunction.pd.read_excel")
-    def test_invalid_start_row(self, mock_read_excel):
+    def test_invalid_start_row(self, mock_read_excel, mock_path_exists):
         """
         Test the function with an invalid start_row argument.
 
         Ensures the function raises a ValueError when start_row is negative.
         """
+        mock_path_exists.return_value = True
+
         with self.assertRaises(ValueError):
             process_engagement_data("dummy_path.xlsx", start_row=-1)
 
@@ -116,13 +127,16 @@ class TestProcessEngagementData(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             process_engagement_data("dummy_path.xlsx")
 
+    @patch("dataLoadFunction.os.path.exists")
     @patch("dataLoadFunction.pd.read_excel")
-    def test_empty_dataframe(self, mock_read_excel):
+    def test_empty_dataframe(self, mock_read_excel, mock_path_exists):
         """
         Test the function with an empty DataFrame.
 
         Ensures the function handles an empty DataFrame correctly without errors.
         """
+        mock_path_exists.return_value = True
+
         # Mock an empty DataFrame
         mock_df = pd.DataFrame(
             {
@@ -150,13 +164,16 @@ class TestProcessEngagementData(unittest.TestCase):
         # Check the processed DataFrame
         self.assertTrue(df_processed.empty)
 
+    @patch("dataLoadFunction.os.path.exists")
     @patch("dataLoadFunction.pd.read_excel")
-    def test_no_matching_service_line(self, mock_read_excel):
+    def test_no_matching_service_line(self, mock_read_excel, mock_path_exists):
         """
         Test the function with no rows matching the default service line filter.
 
         Ensures the resulting DataFrame is empty when no rows match the filter criteria.
         """
+        mock_path_exists.return_value = True
+
         # Mock the data to be returned by pd.read_excel
         mock_data = {
             "Engagement ID": [1, 2],
