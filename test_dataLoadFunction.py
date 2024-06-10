@@ -45,14 +45,15 @@ class TestProcessEngagementData(unittest.TestCase):
 
         # Check the processed DataFrame
         self.assertEqual(
-            df_processed.shape, (1, 16)
-        )  # Only 1 row should match the default filter criteria
+            df_processed.shape, (1, 17)
+        )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
         self.assertIn("ETC Age", df_processed.columns)
-        self.assertIn("Data Date", df_processed.columns)
+        self.assertIn("Report Date", df_processed.columns)
         self.assertEqual(
             df_processed["ETC Age"].iloc[0],
             (
-                df_processed["Data Date"].iloc[0] - df_processed["Last ETC Date"].iloc[0]
+                df_processed["Report Date"].iloc[0]
+                - df_processed["Last ETC Date"].iloc[0]
             ).days,
         )
 
@@ -95,8 +96,8 @@ class TestProcessEngagementData(unittest.TestCase):
 
         # Check the processed DataFrame
         self.assertEqual(
-            df_processed.shape, (1, 16)
-        )  # Only 1 row should match the custom filter criteria
+            df_processed.shape, (1, 17)
+        )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
         self.assertEqual(
             df_processed["Engagement Partner Service Line"].iloc[0], "Advisory"
         )
