@@ -72,11 +72,14 @@ def process_engagement_data(
     try:
         logger.info(f"File Path: {file_path}")
 
-        # Load the Excel data into a DataFrame using Dask for parallel processing
+        # Load the Excel data into a DataFrame
         start_time = time.time()
-        df_raw = dd.read_excel(file_path, skiprows=start_row).compute()
+        df_raw = pd.read_excel(file_path, skiprows=start_row)
         logger.info(f"Data loaded with shape: {df_raw.shape}")
         logger.info(f"Data loading time: {time.time() - start_time:.2f} seconds")
+
+        # Convert to Dask DataFrame for parallel processing
+        df_raw = dd.from_pandas(df_raw, npartitions=4)
 
         # Reduce columns to only the ones needed
         start_time = time.time()
@@ -87,14 +90,18 @@ def process_engagement_data(
         # Filter the data
         df_filtered = df_filtered[
             (
-                df_filtered["Engagement Partner Service Line"].str.lower() == service_line.lower()
-            ) & (df_filtered["Engagement Status"] == "Released")
+                df_filtered["Engagement Partner Service Line"].str.lower()
+                == service_line.lower()
+            )
+            & (df_filtered["Engagement Status"] == "Released")
         ]
         logger.info(f"Data filtered with shape: {df_filtered.shape}")
 
         # Convert date columns to datetime in a single step
         start_time = time.time()
-        df_filtered[date_cols] = df_filtered[date_cols].apply(pd.to_datetime)
+        df_filtered[date_cols] = df_filtered[date_cols].apply(
+            pd.to_datetime, meta=date_cols
+        )
         logger.info(f"Date conversion time: {time.time() - start_time:.2f} seconds")
 
         # Add temporary calculated columns
@@ -102,12 +109,15 @@ def process_engagement_data(
         df_filtered["Last ETC Date"] = df_filtered["Last Active ETC-P Date"].fillna(
             df_filtered["Release Date"]
         )
-        df_filtered["Data Date"] = df_filtered["Last Time Charged Date"].max()
+        df_filtered["Data Date"] = df_filtered["Last Time Charged Date"].max().compute()
 
         # Calculate the age of ETC in days using date offset
         df_filtered["ETC Age"] = (
             df_filtered["Data Date"] - df_filtered["Last ETC Date"]
         ).dt.days
+
+        # Compute the Dask DataFrame to get the final Pandas DataFrame
+        df_filtered = df_filtered.compute()
 
         # Reset index
         df_filtered.reset_index(drop=True, inplace=True)
