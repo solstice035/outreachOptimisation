@@ -87,6 +87,11 @@ def process_engagement_data(
         logger.info(f"Data reduced with shape: {df_filtered.shape}")
         logger.info(f"Column reduction time: {time.time() - start_time:.2f} seconds")
 
+        # Ensure the column to be filtered is of string type
+        df_filtered["Engagement Partner Service Line"] = df_filtered[
+            "Engagement Partner Service Line"
+        ].astype(str)
+
         # Filter the data
         df_filtered = df_filtered[
             (
@@ -99,9 +104,13 @@ def process_engagement_data(
 
         # Convert date columns to datetime in a single step
         start_time = time.time()
-        df_filtered[date_cols] = df_filtered[date_cols].apply(
-            pd.to_datetime, meta=date_cols
-        )
+
+        def convert_to_datetime(df, cols):
+            for col in cols:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+            return df
+
+        df_filtered = df_filtered.map_partitions(convert_to_datetime, cols=date_cols)
         logger.info(f"Date conversion time: {time.time() - start_time:.2f} seconds")
 
         # Add temporary calculated columns
@@ -109,11 +118,13 @@ def process_engagement_data(
         df_filtered["Last ETC Date"] = df_filtered["Last Active ETC-P Date"].fillna(
             df_filtered["Release Date"]
         )
-        df_filtered["Data Date"] = df_filtered["Last Time Charged Date"].max().compute()
+        df_filtered["Report Date"] = (
+            df_filtered["Last Time Charged Date"].max().compute()
+        )
 
         # Calculate the age of ETC in days using date offset
         df_filtered["ETC Age"] = (
-            df_filtered["Data Date"] - df_filtered["Last ETC Date"]
+            df_filtered["Report Date"] - df_filtered["Last ETC Date"]
         ).dt.days
 
         # Compute the Dask DataFrame to get the final Pandas DataFrame
