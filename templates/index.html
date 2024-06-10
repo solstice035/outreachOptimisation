@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Upload Engagement Data</h1>
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.file.label }}<br>
+        {{ form.file(size=32) }}
+    </p>
+    <p>
+        {{ form.start_row.label }}<br>
+        {{ form.start_row }}
+    </p>
+    <p>
+        {{ form.service_line.label }}<br>
+        {{ form.service_line }}
+    </p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

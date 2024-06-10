@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Data Preview</h1>
+    <form method="POST" action="{{ url_for('process') }}">
+        <input type="hidden" name="file_path" value="{{ file_path }}">
+        <input type="hidden" name="start_row" value="{{ start_row }}">
+        <input type="hidden" name="service_line" value="{{ service_line }}">
+        <button type="submit">Process Data</button>
+    </form>
+    <h2>Preview of Uploaded Data:</h2>
+    <div>{{ table|safe }}</div>
+{% endblock %}
