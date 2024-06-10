@@ -14,12 +14,18 @@
 <form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
     <input type="hidden" name="file_path" value="{{ file_path }}">
     <div class="mb-3">
-        <label for="start_row" class="form-label">Start Row for Processing</label>
-        <input type="number" class="form-control" id="start_row" name="start_row" value="0" min="0">
+        <label class="form-label">Selected File</label>
+        <input type="text" class="form-control" value="{{ file_path.split('/')[-1] }}" disabled>
     </div>
-    <div class="mb-3">
-        <label for="service_line" class="form-label">Service Line</label>
-        <input type="text" class="form-control" id="service_line" name="service_line" value="Consulting">
+    <div class="row mb-3">
+        <div class="col">
+            <label for="start_row" class="form-label">Start Row for Processing</label>
+            <input type="number" class="form-control" id="start_row" name="start_row" value="0" min="0">
+        </div>
+        <div class="col">
+            <label for="service_line" class="form-label">Service Line</label>
+            <input type="text" class="form-control" id="service_line" name="service_line" value="Consulting">
+        </div>
     </div>
     <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" id="export_log" name="export_log">

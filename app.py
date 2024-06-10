@@ -35,6 +35,9 @@ def index():
         file.save(file_path)
 
         try:
+            flash(
+                "File uploaded successfully. Previewing the first 20 rows.", "success"
+            )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
             return render_template(
@@ -73,6 +76,8 @@ def process():
 
         # Limit displayed rows to 20
         df_display = df_processed.head(20)
+
+        flash("Data processed successfully.", "success")
 
         if export_log:
             log_file_name = f"app_{timestamp}.log"
