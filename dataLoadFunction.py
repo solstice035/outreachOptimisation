@@ -1,156 +1,208 @@
-import os
+import unittest
+from unittest.mock import patch
 import pandas as pd
-import logging
-import dask.dataframe as dd
-import time
+from dataLoadFunction import (
+    process_engagement_data,
+)  # Replace 'dataLoadFunction' with the actual module name
 
 
-def process_engagement_data(
-    file_path,
-    start_row=0,
-    keep_cols=None,
-    date_cols=None,
-    service_line="Consulting",
-    verbose=True,
-):
-    """
-    Processes an Excel file containing engagement data, filters and formats the data, and adds calculated columns.
+class TestProcessEngagementData(unittest.TestCase):
 
-    Args:
-        file_path (str): The path to the Excel file.
-        start_row (int, optional): The row to start reading data from. Defaults to 0.
-        keep_cols (list, optional): List of columns to keep. Defaults to a predefined list.
-        date_cols (list, optional): List of columns to convert to datetime. Defaults to a predefined list.
-        service_line (str, optional): The service line to filter by. Defaults to 'Consulting'.
-        verbose (bool, optional): If True, print and log additional information. Defaults to True.
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_successful_processing(self, mock_read_excel, mock_path_exists):
+        """
+        Test successful processing with default service line filter.
 
-    Returns:
-        pd.DataFrame: The processed DataFrame.
+        Mocks the data to be returned by pd.read_excel and checks the resulting
+        DataFrame is correctly processed and filtered.
+        """
+        # Mock the file existence check
+        mock_path_exists.return_value = True
 
-    Raises:
-        FileNotFoundError: If the specified file does not exist.
-        ValueError: If invalid arguments are provided.
-        Exception: For other errors that occur during processing.
-    """
-    # Configure logging
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
+        # Mock the data to be returned by pd.read_excel
+        mock_data = {
+            "Engagement ID": [1, 2],
+            "Creation Date": ["2024-05-10", "2024-05-11"],
+            "Release Date": ["2024-06-10", "2024-06-11"],
+            "Last Time Charged Date": ["2024-06-01", "2024-06-02"],
+            "Last Expenses Charged Date": ["2024-05-30", "2024-05-31"],
+            "Last Active ETC-P Date": ["2024-05-15", None],
+            "Engagement": ["Eng1", "Eng2"],
+            "Client": ["Client1", "Client2"],
+            "Engagement Partner": ["Partner1", "Partner2"],
+            "Engagement Partner GUI": [101, 102],
+            "Engagement Manager": ["Manager1", "Manager2"],
+            "Engagement Manager GUI": [201, 202],
+            "Engagement Partner Service Line": ["Consulting", "Advisory"],
+            "Engagement Status": ["Released", "Released"],
+        }
+        mock_df = pd.DataFrame(mock_data)
+        mock_read_excel.return_value = mock_df
 
-    if not isinstance(start_row, int) or start_row < 0:
-        raise ValueError("start_row must be a non-negative integer.")
+        # Call the function
+        df_processed = process_engagement_data("dummy_path.xlsx")
 
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"The file {file_path} does not exist.")
-
-    if keep_cols is None:
-        keep_cols = [
-            "Engagement ID",
-            "Creation Date",
-            "Release Date",
-            "Last Time Charged Date",
-            "Last Expenses Charged Date",
-            "Last Active ETC-P Date",
-            "Engagement",
-            "Client",
-            "Engagement Partner",
-            "Engagement Partner GUI",
-            "Engagement Manager",
-            "Engagement Manager GUI",
-            "Engagement Partner Service Line",
-            "Engagement Status",
-        ]
-
-    if date_cols is None:
-        date_cols = [
-            "Creation Date",
-            "Release Date",
-            "Last Time Charged Date",
-            "Last Expenses Charged Date",
-            "Last Active ETC-P Date",
-        ]
-
-    try:
-        logger.info(f"File Path: {file_path}")
-
-        # Load the Excel data into a DataFrame
-        start_time = time.time()
-        df_raw = pd.read_excel(file_path, skiprows=start_row)
-        logger.info(f"Data loaded with shape: {df_raw.shape}")
-        logger.info(f"Data loading time: {time.time() - start_time:.2f} seconds")
-
-        # Convert to Dask DataFrame for parallel processing
-        df_raw = dd.from_pandas(df_raw, npartitions=4)
-
-        # Reduce columns to only the ones needed
-        start_time = time.time()
-        df_filtered = df_raw[keep_cols]
-        logger.info(f"Data reduced with shape: {df_filtered.shape}")
-        logger.info(f"Column reduction time: {time.time() - start_time:.2f} seconds")
-
-        # Ensure the column to be filtered is of string type
-        df_filtered["Engagement Partner Service Line"] = df_filtered[
-            "Engagement Partner Service Line"
-        ].astype(str)
-
-        # Filter the data
-        df_filtered = df_filtered[
+        # Check the processed DataFrame
+        self.assertEqual(
+            df_processed.shape, (1, 17)
+        )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
+        self.assertIn("ETC Age", df_processed.columns)
+        self.assertIn("Report Date", df_processed.columns)
+        self.assertEqual(
+            df_processed["ETC Age"].iloc[0],
             (
-                df_filtered["Engagement Partner Service Line"].str.lower()
-                == service_line.lower()
-            )
-            & (df_filtered["Engagement Status"] == "Released")
-        ]
-        logger.info(f"Data filtered with shape: {df_filtered.shape}")
-
-        # Convert date columns to datetime in a single step
-        start_time = time.time()
-
-        def convert_to_datetime(df, cols):
-            for col in cols:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
-            return df
-
-        df_filtered = df_filtered.map_partitions(convert_to_datetime, cols=date_cols)
-        logger.info(f"Date conversion time: {time.time() - start_time:.2f} seconds")
-
-        # Add temporary calculated columns
-        start_time = time.time()
-        df_filtered["Last ETC Date"] = df_filtered["Last Active ETC-P Date"].fillna(
-            df_filtered["Release Date"]
-        )
-        df_filtered["Report Date"] = (
-            df_filtered["Last Time Charged Date"].max().compute()
+                df_processed["Report Date"].iloc[0]
+                - df_processed["Last ETC Date"].iloc[0]
+            ).days,
         )
 
-        # Calculate the age of ETC in days using date offset
-        df_filtered["ETC Age"] = (
-            df_filtered["Report Date"] - df_filtered["Last ETC Date"]
-        ).dt.days
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_custom_service_line_filter(self, mock_read_excel, mock_path_exists):
+        """
+        Test processing with a custom service line filter.
 
-        # Compute the Dask DataFrame to get the final Pandas DataFrame
-        df_filtered = df_filtered.compute()
+        Mocks the data to be returned by pd.read_excel and checks the resulting
+        DataFrame is correctly filtered based on the custom service line.
+        """
+        # Mock the file existence check
+        mock_path_exists.return_value = True
 
-        # Reset index
-        df_filtered.reset_index(drop=True, inplace=True)
-        logger.info(
-            f"Temporary column addition and index reset time: {time.time() - start_time:.2f} seconds"
+        # Mock the data to be returned by pd.read_excel
+        mock_data = {
+            "Engagement ID": [1, 2],
+            "Creation Date": ["2024-05-10", "2024-05-11"],
+            "Release Date": ["2024-06-10", "2024-06-11"],
+            "Last Time Charged Date": ["2024-06-01", "2024-06-02"],
+            "Last Expenses Charged Date": ["2024-05-30", "2024-05-31"],
+            "Last Active ETC-P Date": ["2024-05-15", None],
+            "Engagement": ["Eng1", "Eng2"],
+            "Client": ["Client1", "Client2"],
+            "Engagement Partner": ["Partner1", "Partner2"],
+            "Engagement Partner GUI": [101, 102],
+            "Engagement Manager": ["Manager1", "Manager2"],
+            "Engagement Manager GUI": [201, 202],
+            "Engagement Partner Service Line": ["Consulting", "Advisory"],
+            "Engagement Status": ["Released", "Released"],
+        }
+        mock_df = pd.DataFrame(mock_data)
+        mock_read_excel.return_value = mock_df
+
+        # Call the function with custom service line
+        df_processed = process_engagement_data(
+            "dummy_path.xlsx", service_line="Advisory"
         )
 
-        # Log data types
-        logger.info(f"Data Types: {df_filtered.dtypes}")
+        # Check the processed DataFrame
+        self.assertEqual(
+            df_processed.shape, (1, 17)
+        )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
+        self.assertEqual(
+            df_processed["Engagement Partner Service Line"].iloc[0], "Advisory"
+        )
 
-        return df_filtered
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_invalid_start_row(self, mock_read_excel, mock_path_exists):
+        """
+        Test the function with an invalid start_row argument.
 
-    except FileNotFoundError as fnf_error:
-        logger.error(f"File not found: {fnf_error}")
-        raise
-    except ValueError as val_error:
-        logger.error(f"Value error: {val_error}")
-        raise
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
-        raise
+        Ensures the function raises a ValueError when start_row is negative.
+        """
+        mock_path_exists.return_value = True
+
+        with self.assertRaises(ValueError):
+            process_engagement_data("dummy_path.xlsx", start_row=-1)
+
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_file_not_exists(self, mock_read_excel, mock_path_exists):
+        """
+        Test the function with a non-existent file.
+
+        Ensures the function raises a FileNotFoundError when the file does not exist.
+        """
+        mock_path_exists.return_value = False
+
+        with self.assertRaises(FileNotFoundError):
+            process_engagement_data("dummy_path.xlsx")
+
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_empty_dataframe(self, mock_read_excel, mock_path_exists):
+        """
+        Test the function with an empty DataFrame.
+
+        Ensures the function handles an empty DataFrame correctly without errors.
+        """
+        mock_path_exists.return_value = True
+
+        # Mock an empty DataFrame
+        mock_df = pd.DataFrame(
+            {
+                "Engagement ID": [],
+                "Creation Date": [],
+                "Release Date": [],
+                "Last Time Charged Date": [],
+                "Last Expenses Charged Date": [],
+                "Last Active ETC-P Date": [],
+                "Engagement": [],
+                "Client": [],
+                "Engagement Partner": [],
+                "Engagement Partner GUI": [],
+                "Engagement Manager": [],
+                "Engagement Manager GUI": [],
+                "Engagement Partner Service Line": [],
+                "Engagement Status": [],
+            }
+        )
+        mock_read_excel.return_value = mock_df
+
+        # Call the function
+        df_processed = process_engagement_data("dummy_path.xlsx")
+
+        # Check the processed DataFrame
+        self.assertTrue(df_processed.empty)
+
+    @patch("dataLoadFunction.os.path.exists")
+    @patch("dataLoadFunction.pd.read_excel")
+    def test_no_matching_service_line(self, mock_read_excel, mock_path_exists):
+        """
+        Test the function with no rows matching the default service line filter.
+
+        Ensures the resulting DataFrame is empty when no rows match the filter criteria.
+        """
+        mock_path_exists.return_value = True
+
+        # Mock the data to be returned by pd.read_excel
+        mock_data = {
+            "Engagement ID": [1, 2],
+            "Creation Date": ["2024-05-10", "2024-05-11"],
+            "Release Date": ["2024-06-10", "2024-06-11"],
+            "Last Time Charged Date": ["2024-06-01", "2024-06-02"],
+            "Last Expenses Charged Date": ["2024-05-30", "2024-05-31"],
+            "Last Active ETC-P Date": ["2024-05-15", None],
+            "Engagement": ["Eng1", "Eng2"],
+            "Client": ["Client1", "Client2"],
+            "Engagement Partner": ["Partner1", "Partner2"],
+            "Engagement Partner GUI": [101, 102],
+            "Engagement Manager": ["Manager1", "Manager2"],
+            "Engagement Manager GUI": [201, 202],
+            "Engagement Partner Service Line": ["Tax", "Advisory"],
+            "Engagement Status": ["Released", "Released"],
+        }
+        mock_df = pd.DataFrame(mock_data)
+        mock_read_excel.return_value = mock_df
+
+        # Call the function
+        df_processed = process_engagement_data("dummy_path.xlsx")
+
+        # Check the processed DataFrame
+        self.assertTrue(
+            df_processed.empty
+        )  # No rows should match the default filter criteria
 
 
-# Example usage:
-# df_processed = process_engagement_data("./inputData/PreviousWeeksEngagementLists/20240510 Engagement List.xlsx")
+if __name__ == "__main__":
+    unittest.main()
