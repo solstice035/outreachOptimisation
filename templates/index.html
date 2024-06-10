@@ -1,20 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Upload Engagement Data</h1>
-<form method="POST" enctype="multipart/form-data">
+<h1 class="mb-4">Upload and Preview Excel File</h1>
+<form method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
     {{ form.hidden_tag() }}
-    <p>
-        {{ form.file.label }}<br>
-        {{ form.file(size=32) }}
-    </p>
-    <p>
-        {{ form.start_row.label }}<br>
-        {{ form.start_row }}
-    </p>
-    <p>
-        {{ form.service_line.label }}<br>
-        {{ form.service_line }}
-    </p>
-    <p>{{ form.submit() }}</p>
+    <div class="mb-3">
+        {{ form.file.label(class="form-label") }}
+        {{ form.file(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-primary mb-4">Upload</button>
 </form>
+
+{% if table %}
+<h2>Preview of Uploaded Data (First 20 rows):</h2>
+<div class="table-responsive">
+    {{ table|safe }}
+</div>
+<form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
+    <input type="hidden" name="file_path" value="{{ file_path }}">
+    <div class="mb-3">
+        <label for="start_row" class="form-label">Start Row for Processing</label>
+        <input type="number" class="form-control" id="start_row" name="start_row" value="0" min="0">
+    </div>
+    <div class="mb-3">
+        <label for="service_line" class="form-label">Service Line</label>
+        <input type="text" class="form-control" id="service_line" name="service_line" value="Consulting">
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="export_log" name="export_log">
+        <label class="form-check-label" for="export_log">
+            Export Log File
+        </label>
+    </div>
+    <button type="submit" class="btn btn-success mb-4">Process Data</button>
+</form>
+{% endif %}
 {% endblock %}

@@ -1,8 +1,6 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
 }
 
 .container {
@@ -19,41 +17,19 @@ h2 {
     color: #333;
 }
 
-form p {
-    margin-bottom: 10px;
+.form-label {
+    font-weight: bold;
 }
 
-input[type="file"],
-input[type="text"],
-input[type="number"],
-button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
+.table-responsive {
+    margin-top: 20px;
 }
 
-button {
-    background-color: #5cb85c;
-    color: #fff;
-    border: none;
-    cursor: pointer;
+.alert {
+    margin-top: 20px;
 }
 
-button:hover {
-    background-color: #4cae4c;
-}
-
-.flashes {
-    list-style-type: none;
-    padding: 0;
-}
-
-.flashes li {
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.flashes li.danger {
-    background-color: #f2dede;
-    color: #a94442;
+.btn-close {
+    float: right;
+    font-size: 1.2rem;
 }

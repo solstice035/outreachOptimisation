@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Processed Data</h1>
+<div class="table-responsive">
+    {{ table|safe }}
+</div>
+<a href="{{ download_link }}" class="btn btn-primary mt-4">Download Full Processed Data</a>
+{% if log_link %}
+<a href="{{ log_link }}" class="btn btn-secondary mt-4">Download Log File</a>
+{% endif %}
+<a href="{{ url_for('index') }}" class="btn btn-light mt-4">Back to Upload</a>
+{% endblock %}
