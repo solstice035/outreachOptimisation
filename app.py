@@ -1,11 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
-from werkzeug.utils import secure_filename
 import os
+import logging
 import pandas as pd
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    session,
+)
+from werkzeug.utils import secure_filename
+from datetime import datetime
+from dotenv import load_dotenv
 from forms import UploadForm
 from dataLoadFunction import process_engagement_data
-import logging
-from datetime import datetime
+from database_utils import load_data_to_db
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -47,6 +61,8 @@ def upload():
             )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
+            session["file_path"] = file_path
+            session["upload_timestamp"] = timestamp
             return render_template(
                 "upload.html",
                 form=form,
@@ -65,10 +81,14 @@ def upload():
 
 @app.route("/process", methods=["POST"])
 def process():
-    file_path = request.form["file_path"]
+    file_path = session.get("file_path")
     start_row = int(request.form["start_row"])
     service_line = request.form["service_line"]
     export_log = "export_log" in request.form
+    upload_timestamp = session.get("upload_timestamp")
+    upload_user = (
+        request.remote_addr
+    )  # For simplicity, using the remote address as the user
 
     try:
         # Process the data
@@ -84,8 +104,17 @@ def process():
         )
         df_processed.to_excel(processed_file_path, index=False)
 
+        # Load data to database
+        load_data_to_db(df_processed, "engagement_data", upload_timestamp, upload_user)
+
         # Limit displayed rows to 20
-        df_display = df_processed.head(20)
+        df_display = (
+            df_processed.head(20)
+            .style.set_table_attributes(
+                'table_id="processedTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+            )
+            .to_html()
+        )
 
         flash("Data processed successfully.", "success")
 
@@ -98,19 +127,13 @@ def process():
             )
             return render_template(
                 "processed.html",
-                table=df_display.style.set_table_attributes(
-                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
-                ).to_html(),
+                table=df_display,
                 download_link=processed_file_name,
                 log_link=log_file_name,
             )
         else:
             return render_template(
-                "processed.html",
-                table=df_display.style.set_table_attributes(
-                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
-                ).to_html(),
-                download_link=processed_file_name,
+                "processed.html", table=df_display, download_link=processed_file_name
             )
 
     except Exception as e:
