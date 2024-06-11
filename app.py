@@ -96,14 +96,14 @@ def process():
             )
             return render_template(
                 "processed.html",
-                table=df_display.to_html(classes="table table-striped"),
+                df_display=df_display,
                 download_link=processed_file_name,
                 log_link=log_file_name,
             )
         else:
             return render_template(
                 "processed.html",
-                table=df_display.to_html(classes="table table-striped"),
+                df_display=df_display,
                 download_link=processed_file_name,
             )
 
