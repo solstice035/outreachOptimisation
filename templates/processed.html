@@ -13,25 +13,6 @@
     <a href="{{ url_for('upload') }}" class="btn btn-light">Back to Upload</a>
 </div>
 <div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                {% for col in df_display.columns %}
-                <th class="{% if col in ['Last ETC Date', 'Report Date', 'ETC Age'] %}highlighted-col{% endif %}">{{ col
-                    }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in df_display.itertuples(index=False) %}
-            <tr>
-                {% for col in df_display.columns %}
-                <td class="{% if col in ['Last ETC Date', 'Report Date', 'ETC Age'] %}highlighted-col{% endif %}">{{
-                    getattr(row, col.replace(' ', '_')) }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {{ table|safe }}
 </div>
 {% endblock %}

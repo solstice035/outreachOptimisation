@@ -42,40 +42,9 @@
     </div>
     <button type="submit" class="btn btn-success mb-4">Process Data</button>
 </form>
-
 <h2>Preview of Uploaded Data (First 20 rows):</h2>
-<div class="mb-3">
-    <input type="text" id="searchInput" class="form-control" placeholder="Search...">
-</div>
 <div class="table-responsive">
-    <table id="previewTable" class="table table-striped">
-        {{ table|safe }}
-    </table>
+    {{ table|safe }}
 </div>
 {% endif %}
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('searchInput');
-        const table = document.getElementById('previewTable');
-        const rows = Array.from(table.getElementsByTagName('tr')).slice(1);
-
-        searchInput.addEventListener('input', function () {
-            const searchTerm = searchInput.value.toLowerCase();
-            let rowCount = 0;
-
-            rows.forEach(row => {
-                const cells = Array.from(row.getElementsByTagName('td'));
-                const matches = cells.some(cell => cell.textContent.toLowerCase().includes(searchTerm));
-
-                if (matches && rowCount < 20) {
-                    row.style.display = '';
-                    rowCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

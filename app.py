@@ -50,7 +50,9 @@ def upload():
             return render_template(
                 "upload.html",
                 form=form,
-                table=df_preview.to_html(classes="table table-striped"),
+                table=df_preview.style.set_table_attributes(
+                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+                ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
             )
@@ -96,14 +98,18 @@ def process():
             )
             return render_template(
                 "processed.html",
-                df_display=df_display,
+                table=df_display.style.set_table_attributes(
+                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+                ).to_html(),
                 download_link=processed_file_name,
                 log_link=log_file_name,
             )
         else:
             return render_template(
                 "processed.html",
-                df_display=df_display,
+                table=df_display.style.set_table_attributes(
+                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+                ).to_html(),
                 download_link=processed_file_name,
             )
 
