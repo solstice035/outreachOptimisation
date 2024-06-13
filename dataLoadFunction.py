@@ -116,6 +116,18 @@ def process_engagement_data(
             df_filtered["Report Date"] - df_filtered["Last ETC Date"]
         ).dt.days
 
+        # Convert NAT values to none in date columns
+        df_filtered[date_cols] = (
+            df_filtered[date_cols]
+            .astype(object)
+            .where(pd.notnull(df_filtered[date_cols]), None)
+        )
+
+        # TODO: Fix issue above to allow upload of NAT values to SQL. Currently coverting dtype to object to allow upload @line 119
+
+        # Replace space with underscore from column headers and convert to lowercase
+        df_filtered.columns = df_filtered.columns.str.replace(" ", "_").str.lower()
+
         # Reset index
         df_filtered.reset_index(drop=True, inplace=True)
         logger.info(
