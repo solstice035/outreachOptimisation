@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<!-- Copy paste only the line that starts with 'concat' into the flow, ignore all the comments etc. -->
+<!-- 
+ ################   Engagement Manager tables
+ -->
+
+<!-- Due Soon Table -->
+concat('<h3>ETCs Due Soon</h3><p>An ETC for the following engagement(s) in your portfolio is due within the next week, please start preparing your ETC.</p><div class="due-table">', body('Create_HTML_table_with_Engagements_due_soon'), '</div>')
+
+
+<!-- Overdue Table -->
+concat('<h3 style="color: #BD910F;">Overdue ETCs</h3><p>An ETC for the following engagement(s) in your portfolio is now overdue, please <em>submit an ETC as soon as possible</em> or apply for an exception.</p> <div class="overdue-table">', body('Create_HTML_table_with_Engagements_overdue'), '</div>')
+
+<!-- Escalation table -->
+
+concat('<h3 style="color: #A30000;">ETCs that have been escalated to your EP</h3><p><strong>Please take immediate action. </strong> An ETC for the following engagement(s) in your portfolio is more than 4 weeks overdue. You must submit an ETC, apply for an exception or move the code to pre-closing. </p><div class="escalation-table">', body('Create_HTML_table_with_Engagements_with_Escalation_status_'), '</div>')
+
+ <!-- 
+ ################   Engagement Partner tables
+ -->
+
+<!-- Escaltion table -->
+ concat('<h3  style="color: #A30000">Overdue ETCs That Require Your Attention</h3><p><strong>Please take immediate action. </strong>&nbsp; An ETC for the following engagement(s) in your portfolio is more than 4 weeks overdue. Please work with your Engagement Manager(s) to resolve urgently. </p><div class="escalation-table">', body('EP_Create_HTML_table_-__Escalation'), '</div>')
+
+<!-- Overdue Table -->
+concat('<h3>Overdue ETCs</h3><p>An ETC for the following engagement(s) in your portfolio is 0-4 weeks overdue, please encourage your team to submit an ETC or apply for an exception as soon as possible </p> <div class="overdue-table">', body('EP_Create_HTML_table_-_Overdue'), '</div>')
+
+<!-- Due Soon Table -->
+concat('<h3>ETCs Due Soon</h3><p><em>For information only, </em> An ETC for the following engagement(s) in your portfolio is due within the next week, the EM has been informed</p><div class="info-table">', body('EP_Create_HTML_table_-__Due_Soon'), '</div>')
+
+<!-- Due later table -->
+concat('<h3>ETCs Due Later</h3><p><em>For information only, </em> The ETC for the following engagement(s) are up to date.</p> <div class="info-table">', body('EP_Create_HTML_table_-_Due_Later'), '</div>')
+
+<!-- Exception table -->
+concat('<h3>ETCs with active exception</h3><p>An ETC for the following engagement(s) in your portfolio has an active exception:</p> <div class="info-table">', body('EP_Create_HTML_table_-_Exception'), '</div>')
+
+<html
