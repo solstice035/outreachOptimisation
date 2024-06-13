@@ -1,0 +1,41 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    margin-top: 50px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1,
+h2 {
+    color: #333;
+}
+
+.form-label {
+    font-weight: bold;
+}
+
+.table-responsive {
+    margin-top: 20px;
+}
+
+.alert {
+    margin-top: 20px;
+}
+
+.btn-close {
+    float: right;
+    font-size: 1.2rem;
+}
+
+.highlighted-col {
+    background-color: #ffeb3b;
+    /* Light yellow background */
+    font-weight: bold;
+}

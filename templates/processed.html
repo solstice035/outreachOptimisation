@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('upload') }}">Upload</a></li>
+<li class="breadcrumb-item active" aria-current="page">Processed Data</li>
+{% endblock %}
+{% block content %}
+<h1 class="mb-4">Processed Data</h1>
+<div class="mb-4">
+    <a href="{{ url_for('download', filename=download_link) }}" class="btn btn-primary">Download Full Processed Data</a>
+    {% if log_link %}
+    <a href="{{ url_for('download_log', filename=log_link) }}" class="btn btn-secondary">Download Log File</a>
+    {% endif %}
+    <a href="{{ url_for('upload') }}" class="btn btn-light">Back to Upload</a>
+</div>
+<div class="table-responsive">
+    {{ table|safe }}
+</div>
+{% endblock %}

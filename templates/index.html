@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Upload</li>
+{% endblock %}
+{% block content %}
+<h1 class="mb-4">Upload and Preview Excel File</h1>
+<form method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.file.label(class="form-label") }}
+        {{ form.file(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-primary mb-4">Preview</button>
+</form>
+
+{% if table %}
+<form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
+    <input type="hidden" name="file_path" value="{{ file_path }}">
+    <div class="mb-3">
+        <label class="form-label">Selected File</label>
+        <input type="text" class="form-control" value="{{ file_path.split('/')[-1] }}" disabled>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label for="start_row" class="form-label">Start Row for Processing</label>
+            <input type="number" class="form-control" id="start_row" name="start_row" value="0" min="0">
+        </div>
+        <div class="col">
+            <label for="service_line" class="form-label">Service Line</label>
+            <select class="form-select" id="service_line" name="service_line">
+                {% for line in service_lines %}
+                <option value="{{ line }}">{{ line }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="export_log" name="export_log">
+        <label class="form-check-label" for="export_log">
+            Export Log File
+        </label>
+    </div>
+    <button type="submit" class="btn btn-success mb-4">Process Data</button>
+</form>
+<h2>Preview of Uploaded Data (First 20 rows):</h2>
+<div class="table-responsive">
+    {{ table|safe }}
+</div>
+{% endif %}
+{% endblock %}

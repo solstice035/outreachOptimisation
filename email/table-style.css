@@ -1,0 +1,40 @@
+<style>
+  .escalation-table, .overdue-table, .due-table, .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  .escalation-table th,
+  .escalation-table td,
+  .overdue-table th,
+  .overdue-table td,
+  .due-table th,
+  .due-table td,
+  .info-table th,
+  .info-table td {
+    padding: 10px;
+    color: #333;
+    line-height: 24px;
+    font-size: 16px;
+    text-align: left;
+    border-bottom: 1px solid #aaa;
+  }
+
+  .escalation-table thead th {
+    background-color: #FFCCCC; /* light red */
+  }
+
+  .overdue-table thead th {
+    background-color: #F2CD60; /* overdue color */
+  }
+
+  .due-table thead th {
+    background-color: #8BBB92; /* due color */
+  }
+
+  .info-table thead th {
+    background-color: #CCCCCC; /* info color (previously due later and exception color) */
+  }
+</style>
