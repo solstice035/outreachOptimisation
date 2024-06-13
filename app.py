@@ -96,6 +96,8 @@ def process():
             file_path, start_row=start_row, service_line=service_line
         )
 
+        df_display_size = df_processed.shape[0]
+
         # Save processed data to a new Excel file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         processed_file_name = f"processed_data_{timestamp}.xlsx"
@@ -133,7 +135,10 @@ def process():
             )
         else:
             return render_template(
-                "processed.html", table=df_display, download_link=processed_file_name
+                "processed.html",
+                table=df_display,
+                download_link=processed_file_name,
+                size=df_display_size,
             )
 
     except Exception as e:
