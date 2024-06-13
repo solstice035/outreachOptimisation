@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 from dataLoadFunction import (
     process_engagement_data,
-)  # Replace 'dataLoadFunction' with the actual module name
+)  # Ensure this is the correct import
 
 
 class TestProcessEngagementData(unittest.TestCase):
@@ -47,13 +47,13 @@ class TestProcessEngagementData(unittest.TestCase):
         self.assertEqual(
             df_processed.shape, (1, 17)
         )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
-        self.assertIn("ETC Age", df_processed.columns)
-        self.assertIn("Report Date", df_processed.columns)
+        self.assertIn("etc_age", df_processed.columns)
+        self.assertIn("report_date", df_processed.columns)
         self.assertEqual(
-            df_processed["ETC Age"].iloc[0],
+            df_processed["etc_age"].iloc[0],
             (
-                df_processed["Report Date"].iloc[0]
-                - df_processed["Last ETC Date"].iloc[0]
+                df_processed["report_date"].iloc[0]
+                - df_processed["last_etc_date"].iloc[0]
             ).days,
         )
 
@@ -99,7 +99,7 @@ class TestProcessEngagementData(unittest.TestCase):
             df_processed.shape, (1, 17)
         )  # Expecting 17 columns, including 'Report Date' and 'ETC Age'
         self.assertEqual(
-            df_processed["Engagement Partner Service Line"].iloc[0], "Advisory"
+            df_processed["engagement_partner_service_line"].iloc[0], "Advisory"
         )
 
     @patch("dataLoadFunction.os.path.exists")
