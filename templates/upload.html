@@ -14,6 +14,7 @@
 </form>
 
 {% if table %}
+<p>Rows processed: <span class="badge text-bg-primary">{{size}}</span></p>
 <form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
     <input type="hidden" name="file_path" value="{{ file_path }}">
     <div class="mb-3">
