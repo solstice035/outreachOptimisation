@@ -33,6 +33,10 @@ def create_table_if_not_exists(connection, table_name):
     cursor.close()
 
 
+# TODO: Reorder the columns into a more logical order
+# e.g. primary key first, then foreign keys, then key meta data, date columns and then calc cols
+
+
 def insert_data(connection, df, table_name, upload_timestamp, upload_user):
     cursor = connection.cursor()
     for index, row in df.iterrows():
