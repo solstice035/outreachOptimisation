@@ -1,8 +1,88 @@
-{% extends "base.html" %}
-{% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Delegates</li>
-{% endblock %}
-{% block content %}
-<h1>Delegates Page</h1>
-<p>Content for delegates page goes here.</p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delegates</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <h1>Delegates</h1>
+    <form method="POST" action="{{ url_for('delegates') }}">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.engagement_id.label }} {{ form.engagement_id(size=32) }}
+        </div>
+        <div id="delegates">
+            {% for subform in form.delegates %}
+            <div>
+                {{ subform.delegate_number.label }} {{ subform.delegate_number(size=32) }}
+                {{ subform.delegate_name.label }} {{ subform.delegate_name(size=32) }}
+                {{ subform.delegate_gui.label }} {{ subform.delegate_gui(size=32) }}
+                {{ subform.delegate_email.label }} {{ subform.delegate_email(size=32) }}
+                {{ subform.end_date.label }} {{ subform.end_date(size=32) }}
+            </div>
+            {% endfor %}
+        </div>
+        <button type="button" onclick="addDelegate()">Add Another Delegate</button>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+    <h2>Existing Delegates</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Engagement ID</th>
+                <th>Delegate Number</th>
+                <th>Delegate Name</th>
+                <th>Delegate GUI</th>
+                <th>Delegate Email</th>
+                <th>End Date</th>
+                <th>Added By</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delegate in delegates %}
+            <tr>
+                <td>{{ delegate.id }}</td>
+                <td>{{ delegate.engagement_id }}</td>
+                <td>{{ delegate.delegate_number }}</td>
+                <td>{{ delegate.delegate_name }}</td>
+                <td>{{ delegate.delegate_gui }}</td>
+                <td>{{ delegate.delegate_email }}</td>
+                <td>{{ delegate.end_date }}</td>
+                <td>{{ delegate.added_by }}</td>
+                <td>{{ delegate.added_timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        function addDelegate() {
+            let container = document.getElementById('delegates');
+            let index = container.children.length;
+            let newDelegate = `
+                <div>
+                    <label for="delegates-${index}-delegate_number">Delegate Number</label>
+                    <input type="text" name="delegates-${index}-delegate_number" id="delegates-${index}-delegate_number" size="32">
+                    <label for="delegates-${index}-delegate_name">Delegate Name</label>
+                    <input type="text" name="delegates-${index}-delegate_name" id="delegates-${index}-delegate_name" size="32">
+                    <label for="delegates-${index}-delegate_gui">Delegate GUI</label>
+                    <input type="text" name="delegates-${index}-delegate_gui" id="delegates-${index}-delegate_gui" size="32">
+                    <label for="delegates-${index}-delegate_email">Delegate Email</label>
+                    <input type="text" name="delegates-${index}-delegate_email" id="delegates-${index}-delegate_email" size="32">
+                    <label for="delegates-${index}-end_date">End Date (Optional)</label>
+                    <input type="date" name="delegates-${index}-end_date" id="delegates-${index}-end_date" size="32">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', newDelegate);
+        }
+    </script>
+</body>
+
+</html>

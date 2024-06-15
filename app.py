@@ -1,114 +1,214 @@
-# app.py
-
-from flask import Flask, render_template, request, redirect, url_for, flash
-from utils.data_load import process_engagement_data
-from utils.database import (
-    load_data_to_db,
-    insert_delegates,
-    get_db_connection,
-    is_user_authorized,
-)
+import os
 import logging
+import pandas as pd
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    session,
+)
+from werkzeug.utils import secure_filename
 from datetime import datetime
+from dotenv import load_dotenv
+from forms import UploadForm
+from utils.data_load import process_engagement_data
+from utils.database import load_engagement_data, load_delegate_data
+from forms import DelegateForm
 
 app = Flask(__name__)
+# app.config["SQLALCHEMY_DATABASE_URI"] = (
+#     "sqlite:///your_database.db"  # Use your actual database URI
+# )
 app.config["SECRET_KEY"] = "your_secret_key"
 
+# Load environment variables
+load_dotenv()
 
-# Home page route
+app = Flask(__name__)
+app.secret_key = "your_secret_key"
+app.config["UPLOAD_FOLDER"] = "uploads"
+app.config["LOG_FOLDER"] = "logs"
+
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+logging.basicConfig(
+    filename=os.path.join(app.config["LOG_FOLDER"], "app.log"), level=logging.INFO
+)
+
+static_service_lines = ["All", "CBS & Elim", "Assurance", "Consulting", "Tax", "SaT"]
+
+
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("home.html")
 
 
-# Upload page route
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
-    if request.method == "POST":
-        file = request.files["file"]
-        if not file:
-            flash("No file selected", "danger")
-            return redirect(request.url)
-        start_row = int(request.form.get("start_row", 0))
-        service_line = request.form.get("service_line")
-        # Save file and process data
-        file_path = f"./data/input/{file.filename}"
+    form = UploadForm()
+    if form.validate_on_submit():
+        file = form.file.data
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{timestamp}_{filename}")
+
         file.save(file_path)
+
         try:
-            df = process_engagement_data(
-                file_path, start_row=start_row, service_line=service_line
+            flash(
+                "File uploaded successfully. Previewing the first 20 rows.", "success"
             )
-            # Log and generate file names
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_filename = f"processed_{timestamp}.xlsx"
-            log_filename = f"logs/app_{timestamp}.log"
-            # Save processed file
-            df.to_excel(f"./data/output/{output_filename}", index=False)
-            # Load data into the database
-            load_data_to_db(
-                df,
-                "engagement_data",
-                upload_timestamp=datetime.now(),
-                upload_user="user_id",
-            )
-            flash("File processed and data loaded successfully", "success")
+            # Show preview of first 20 rows
+            df_preview = pd.read_excel(file_path).head(20)
+            session["file_path"] = file_path
+            session["upload_timestamp"] = timestamp
             return render_template(
-                "processed.html",
-                table=df.head(20).to_html(),
-                download_link=output_filename,
-                log_link=log_filename,
+                "upload.html",
+                form=form,
+                table=df_preview.style.set_table_attributes(
+                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+                ).to_html(),
+                file_path=file_path,
+                service_lines=static_service_lines,
             )
         except Exception as e:
-            logging.error(f"Error processing data: {e}")
-            flash(f"Error processing data: {e}", "danger")
-            return redirect(request.url)
-    return render_template("index.html")
+            flash(f"Error processing file: {str(e)}", "danger")
+            return redirect(url_for("upload"))
+
+    return render_template("upload.html", form=form, service_lines=static_service_lines)
 
 
-# Add delegate route
-@app.route("/add_delegate", methods=["GET", "POST"])
-def add_delegate():
-    if request.method == "POST":
-        engagement_id = request.form["engagement_id"]
-        delegate_names = request.form.getlist("delegate_name[]")
-        delegate_emails = request.form.getlist("delegate_email[]")
-        end_dates = request.form.getlist("end_date[]")
+@app.route("/process", methods=["POST"])
+def process():
+    file_path = session.get("file_path")
+    start_row = int(request.form["start_row"])
+    service_line = request.form["service_line"]
+    export_log = "export_log" in request.form
+    upload_timestamp = session.get("upload_timestamp")
+    upload_user = (
+        request.remote_addr
+    )  # For simplicity, using the remote address as the user
 
-        # Placeholder for user ID; replace with actual user authentication
-        user_id = (
-            "1234567"  # Example user ID; should be fetched from session/auth context
+    try:
+        # Process the data
+        df_processed = process_engagement_data(
+            file_path, start_row=start_row, service_line=service_line
         )
 
-        if not is_user_authorized(user_id, engagement_id):
-            flash(
-                "You are not authorized to add delegates to this engagement.", "danger"
+        df_display_size = df_processed.shape[0]
+
+        # Save processed data to a new Excel file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        processed_file_name = f"processed_data_{timestamp}.xlsx"
+        processed_file_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], processed_file_name
+        )
+        df_processed.to_excel(processed_file_path, index=False)
+
+        # Load data to database
+        load_engagement_data(df_processed, upload_timestamp, upload_user)
+
+        # Limit displayed rows to 20
+        df_display = (
+            df_processed.head(20)
+            .style.set_table_attributes(
+                'table_id="processedTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
             )
-            return redirect(url_for("add_delegate"))
+            .to_html()
+        )
 
-        try:
-            connection = get_db_connection()
-            insert_delegates(
-                connection,
-                engagement_id,
-                delegate_names,
-                delegate_emails,
-                end_dates,
-                user_id,
+        flash("Data processed successfully.", "success")
+
+        if export_log:
+            log_file_name = f"app_{timestamp}.log"
+            logging.shutdown()
+            os.rename(
+                os.path.join(app.config["LOG_FOLDER"], "app.log"),
+                os.path.join(app.config["LOG_FOLDER"], log_file_name),
             )
-            flash("Delegates added successfully.", "success")
-        except Exception as e:
-            logging.error(f"Error adding delegates: {str(e)}")
-            flash(f"Error adding delegates: {str(e)}", "danger")
-        finally:
-            if connection:
-                connection.close()
+            return render_template(
+                "processed.html",
+                table=df_display,
+                download_link=processed_file_name,
+                log_link=log_file_name,
+            )
+        else:
+            return render_template(
+                "processed.html",
+                table=df_display,
+                download_link=processed_file_name,
+                size=df_display_size,
+            )
 
-        return redirect(url_for("add_delegate"))
+    except Exception as e:
+        flash(f"Error processing data: {str(e)}", "danger")
+        return redirect(url_for("upload"))
 
-    return render_template("add_delegate.html")
+
+@app.route("/download/<filename>")
+def download(filename):
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    return send_file(file_path, as_attachment=True)
 
 
-# 404 error handler
+@app.route("/download_log/<filename>")
+def download_log(filename):
+    file_path = os.path.join(app.config["LOG_FOLDER"], filename)
+    return send_file(file_path, as_attachment=True)
+
+
+@app.route("/delegates", methods=["GET", "POST"])
+def delegates():
+    form = DelegateForm()
+    if form.validate_on_submit():
+        delegates = []
+        for delegate_form in form.delegates.entries:
+            delegates.append(
+                (
+                    form.engagement_id.data,
+                    delegate_form.delegate_number.data,
+                    delegate_form.delegate_name.data,
+                    delegate_form.delegate_gui.data,
+                    delegate_form.delegate_email.data,
+                    delegate_form.end_date.data,
+                    "default_user",  # Assuming a default user since authorization is removed
+                )
+            )
+        load_delegate_data(delegates)
+        return redirect(url_for("delegates"))
+
+    delegates = delegates.query.all()
+    return render_template("delegates.html", form=form, delegates=delegates)
+
+
+@app.route("/etc_exception_application")
+def etc_exception_application():
+    return render_template("etc_exception_application.html")
+
+
+@app.route("/ep_approval")
+def ep_approval():
+    return render_template("ep_approval.html")
+
+
+@app.route("/finance_approval")
+def finance_approval():
+    return render_template("finance_approval.html")
+
+
+@app.route("/reports")
+def reports():
+    return render_template("reports.html")
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

@@ -125,8 +125,10 @@ def process_engagement_data(
 
         # TODO: Fix issue above to allow upload of NAT values to SQL. Currently coverting dtype to object to allow upload @line 119
 
-        # Replace space with underscore from column headers and convert to lowercase
-        df_filtered.columns = df_filtered.columns.str.replace(" ", "_").str.lower()
+        # Replace space with underscore and all punctuation from column headers and convert to lowercase
+        df_filtered.columns = (
+            df_filtered.columns.str.replace(" ", "_").str.replace("-", "").str.lower()
+        )
 
         # Reset index
         df_filtered.reset_index(drop=True, inplace=True)
