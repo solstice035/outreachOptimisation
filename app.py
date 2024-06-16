@@ -44,6 +44,9 @@ def home():
     return render_template("home.html")
 
 
+############ UPLOAD ############
+
+
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     form = UploadForm()
@@ -60,7 +63,8 @@ def upload():
                 "File uploaded successfully. Previewing the first 20 rows.", "success"
             )
             # Show preview of first 20 rows
-            df_preview = pd.read_excel(file_path).head(20)
+            df_upload = pd.read_excel(file_path)
+            df_preview = df_upload.head(20)
             session["file_path"] = file_path
             session["upload_timestamp"] = timestamp
             return render_template(
@@ -71,13 +75,16 @@ def upload():
                 ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
-                size_preview=df_preview.shape[0],
+                size_preview=df_upload.shape[0],
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
             return redirect(url_for("upload"))
 
     return render_template("upload.html", form=form, service_lines=static_service_lines)
+
+
+############ PROCESS ############
 
 
 @app.route("/process", methods=["POST"])
@@ -157,6 +164,9 @@ def download(filename):
 def download_log(filename):
     file_path = os.path.join(app.config["LOG_FOLDER"], filename)
     return send_file(file_path, as_attachment=True)
+
+
+############ DELEGATES ############
 
 
 @app.route("/delegates")
