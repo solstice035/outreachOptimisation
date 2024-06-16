@@ -71,6 +71,7 @@ def upload():
                 ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
+                size_preview=df_preview.shape[0],
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
@@ -96,7 +97,7 @@ def process():
             file_path, start_row=start_row, service_line=service_line
         )
 
-        df_display_size = df_processed.shape[0]
+        upload_display_size = df_processed.shape[0]
 
         # Save processed data to a new Excel file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -138,7 +139,7 @@ def process():
                 "processed.html",
                 table=df_display,
                 download_link=processed_file_name,
-                size=df_display_size,
+                size_process=upload_display_size,
             )
 
     except Exception as e:
