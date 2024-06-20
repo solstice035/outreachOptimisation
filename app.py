@@ -23,7 +23,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
-app.config["UPLOAD_FOLDER"] = "uploads"
+app.config["UPLOAD_FOLDER"] = "./data/uploads"
 app.config["LOG_FOLDER"] = "logs"
 
 if not os.path.exists("uploads"):
