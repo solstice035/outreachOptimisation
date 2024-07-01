@@ -27,11 +27,11 @@ class FlaskAppTests(unittest.TestCase):
         cls.app.config["LOG_FOLDER"] = "./test_logs"
 
         # Ensure the test directories exist
-        os.makedirs(cls.app.config["UPLOAD_FOLDER"], exist_ok=True)
+        os.makedirs(cls.app.config["LOAD_FOLDER"], exist_ok=True)
         os.makedirs(cls.app.config["LOG_FOLDER"], exist_ok=True)
 
         # Create a valid Excel test file for upload with the required columns
-        test_file_path = os.path.join(cls.app.config["UPLOAD_FOLDER"], "test_file.xlsx")
+        test_file_path = os.path.join(cls.app.config["LOAD_FOLDER"], "test_file.xlsx")
         df = pd.DataFrame(
             {
                 "Engagement ID": [1, 2, 3],
@@ -62,7 +62,7 @@ class FlaskAppTests(unittest.TestCase):
 
         # Create a valid Excel test file for process with the required columns
         process_file_path = os.path.join(
-            cls.app.config["UPLOAD_FOLDER"], "process_test_file.xlsx"
+            cls.app.config["LOAD_FOLDER"], "process_test_file.xlsx"
         )
         df_process = pd.DataFrame(
             {
@@ -115,7 +115,7 @@ class FlaskAppTests(unittest.TestCase):
         Test the upload page route using a GET request to ensure it is accessible and
         contains the expected content.
         """
-        response = self.client.get("/upload")
+        response = self.client.get("/load")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Upload and Preview Excel File", response.data)
 
@@ -127,7 +127,7 @@ class FlaskAppTests(unittest.TestCase):
         data = {"start_row": 1, "service_line": "Service Line 1"}
         # Use the valid test file here
         test_file_path = os.path.join(
-            self.app.config["UPLOAD_FOLDER"], "test_file.xlsx"
+            self.app.config["LOAD_FOLDER"], "test_file.xlsx"
         )
         with open(test_file_path, "rb") as test_file:
             data["file"] = (test_file, "test_file.xlsx")
@@ -138,7 +138,7 @@ class FlaskAppTests(unittest.TestCase):
                 follow_redirects=True,
             )
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b"File uploaded successfully.", response.data)
+            self.assertIn(b"File loaded successfully.", response.data)
 
     def test_process_data(self):
         """
@@ -147,7 +147,7 @@ class FlaskAppTests(unittest.TestCase):
         """
         with self.client.session_transaction() as sess:
             sess["file_path"] = os.path.join(
-                self.app.config["UPLOAD_FOLDER"], "process_test_file.xlsx"
+                self.app.config["LOAD_FOLDER"], "process_test_file.xlsx"
             )
             sess["upload_timestamp"] = "20230101_000000"
 
