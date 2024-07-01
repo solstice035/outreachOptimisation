@@ -76,11 +76,10 @@ def load():
         file.save(file_path)
 
         try:
-            flash(
-                "File loaded successfully. Previewing the first 20 rows.", "success"
-            )
+            flash("File loaded successfully. Previewing the first 20 rows.", "success")
             # Show preview of first 20 rows
-            df_preview = pd.read_excel(file_path).head(20)
+            df_load = pd.read_excel(file_path)
+            df_preview = df_load.head(20)
             session["file_path"] = file_path
             session["load_timestamp"] = timestamp
             return render_template(
@@ -97,6 +96,7 @@ def load():
             return redirect(url_for("load"))
 
     return render_template("load.html", form=form, service_lines=static_service_lines)
+    # TODO: #8 Add count for number of rows in the preview file
 
 
 # ======== PROCESS ========
@@ -117,7 +117,7 @@ def process():
             file_path, start_row=start_row, service_line=service_line
         )
 
-        df_display_size = df_processed.shape[0]
+        df_procesed_size = df_processed.shape[0]
 
         # Save processed data to a new Excel file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -153,13 +153,14 @@ def process():
                 table=df_display,
                 download_link=processed_file_name,
                 log_link=log_file_name,
+                size=df_procesed_size,
             )
         else:
             return render_template(
                 "processed.html",
                 table=df_display,
                 download_link=processed_file_name,
-                size=df_display_size,
+                size=df_procesed_size,
             )
 
     except Exception as e:

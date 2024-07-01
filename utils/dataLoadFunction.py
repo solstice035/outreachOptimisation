@@ -123,7 +123,7 @@ def process_engagement_data(
             .where(pd.notnull(df_filtered[date_cols]), None)
         )
 
-        # TODO: Fix issue above to allow upload of NAT values to SQL. Currently coverting dtype to object to allow upload @line 119
+        # TODO: #11 Fix issue above to allow upload of NAT values to SQL. Currently coverting dtype to object to allow upload @line 119
 
         # Replace space with underscore from column headers and convert to lowercase
         df_filtered.columns = df_filtered.columns.str.replace(" ", "_").str.lower()

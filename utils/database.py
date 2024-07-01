@@ -33,7 +33,7 @@ def create_table_if_not_exists(connection, table_name):
     cursor.close()
 
 
-# TODO: Reorder the columns into a more logical order
+# TODO: #10 Reorder the columns into a more logical order
 # e.g. primary key first, then foreign keys, then key meta data, date columns and then calc cols
 
 

@@ -13,7 +13,7 @@
     {% endif %}
     <a href="{{ url_for('load') }}" class="btn btn-light">Back to Load</a>
 </div>
-<p>Rows processed: <span class="badge text-bg-primary">{{size_process}}</span></p>
+<p>Rows processed: <span class="badge text-bg-primary">{{size}}</span></p>
 <div class="table-responsive">
     {{ table|safe }}
 </div>
