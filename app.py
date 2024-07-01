@@ -15,8 +15,8 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from dotenv import load_dotenv
 from forms import UploadForm
-from utilities.dataLoadFunction import process_engagement_data
-from utilities.database_utils import load_data_to_db
+from utils.dataLoadFunction import process_engagement_data
+from utils.database_utils import load_data_to_db
 
 # Load environment variables
 load_dotenv()

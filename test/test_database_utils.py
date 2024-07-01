@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import pandas as pd
 from datetime import datetime
-from utilities.database_utils import create_table_if_not_exists, insert_data, load_data_to_db
+from utils.database_utils import create_table_if_not_exists, insert_data, load_data_to_db
 
 
 class TestDatabaseFunctions(unittest.TestCase):
