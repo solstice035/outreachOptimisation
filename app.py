@@ -23,7 +23,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from dotenv import load_dotenv
-from forms import UploadForm
+from forms import LoadForm
 from utils.dataLoadFunction import process_engagement_data
 from utils.database import load_data_to_db
 
@@ -35,14 +35,16 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
-app.config["UPLOAD_FOLDER"] = "./data/uploads"
-app.config["LOG_FOLDER"] = "logs"
+LOAD_FOLDER = "./data/loading"
+LOG_FOLDER = "./logs"
+app.config["LOAD_FOLDER"] = LOAD_FOLDER
+app.config["LOG_FOLDER"] = LOG_FOLDER
 
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
+if not os.path.exists(LOAD_FOLDER):
+    os.makedirs(LOAD_FOLDER)
 
-if not os.path.exists("logs"):
-    os.makedirs("logs")
+if not os.path.exists(LOG_FOLDER):
+    os.makedirs(LOG_FOLDER)
 
 logging.basicConfig(
     filename=os.path.join(app.config["LOG_FOLDER"], "app.log"), level=logging.INFO
@@ -61,28 +63,28 @@ def home():
     return render_template("home.html")
 
 
-# ======== UPLOAD ========
-@app.route("/upload", methods=["GET", "POST"])
-def upload():
-    form = UploadForm()
+# ======== LOAD ========
+@app.route("/load", methods=["GET", "POST"])
+def load():
+    form = LoadForm()
     if form.validate_on_submit():
         file = form.file.data
         filename = secure_filename(file.filename)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{timestamp}_{filename}")
+        file_path = os.path.join(app.config["LOAD_FOLDER"], f"{timestamp}_{filename}")
 
         file.save(file_path)
 
         try:
             flash(
-                "File uploaded successfully. Previewing the first 20 rows.", "success"
+                "File loaded successfully. Previewing the first 20 rows.", "success"
             )
             # Show preview of first 20 rows
             df_preview = pd.read_excel(file_path).head(20)
             session["file_path"] = file_path
-            session["upload_timestamp"] = timestamp
+            session["load_timestamp"] = timestamp
             return render_template(
-                "upload.html",
+                "load.html",
                 form=form,
                 table=df_preview.style.set_table_attributes(
                     'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
@@ -92,9 +94,9 @@ def upload():
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
-            return redirect(url_for("upload"))
+            return redirect(url_for("load"))
 
-    return render_template("upload.html", form=form, service_lines=static_service_lines)
+    return render_template("load.html", form=form, service_lines=static_service_lines)
 
 
 # ======== PROCESS ========
@@ -104,7 +106,7 @@ def process():
     start_row = int(request.form["start_row"])
     service_line = request.form["service_line"]
     export_log = "export_log" in request.form
-    upload_timestamp = session.get("upload_timestamp")
+    upload_timestamp = session.get("load_timestamp")
     upload_user = (
         request.remote_addr
     )  # For simplicity, using the remote address as the user
@@ -121,7 +123,7 @@ def process():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         processed_file_name = f"processed_data_{timestamp}.xlsx"
         processed_file_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], processed_file_name
+            app.config["LOAD_FOLDER"], processed_file_name
         )
         df_processed.to_excel(processed_file_path, index=False)
 
@@ -162,13 +164,13 @@ def process():
 
     except Exception as e:
         flash(f"Error processing data: {str(e)}", "danger")
-        return redirect(url_for("upload"))
+        return redirect(url_for("load"))
 
 
 # ======== DOWNLOADS ========
 @app.route("/download/<filename>")
 def download(filename):
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file_path = os.path.join(app.config["LOAD_FOLDER"], filename)
     return send_file(file_path, as_attachment=True)
 
 

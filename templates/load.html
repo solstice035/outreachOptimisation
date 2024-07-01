@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Upload</li>
+<li class="breadcrumb-item active" aria-current="page">Load</li>
 {% endblock %}
 {% block content %}
 <h1 class="mb-4">Upload and Preview Excel File</h1>
@@ -43,7 +43,7 @@
     </div>
     <button type="submit" class="btn btn-success mb-4">Process Data</button>
 </form>
-<h2>Preview of Uploaded Data (First 20 rows):</h2>
+<h2>Preview of Loaded Data (First 20 rows):</h2>
 <div class="table-responsive">
     {{ table|safe }}
 </div>
