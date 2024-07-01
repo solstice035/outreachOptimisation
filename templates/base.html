@@ -43,13 +43,13 @@
                 form.addEventListener('submit', showLoading);
             });
 
-            // Hide temporary alerts after 5 seconds
+            // Hide temporary alerts after 10 seconds
             setTimeout(function () {
                 const tempAlerts = document.querySelectorAll('.temp-alert');
                 tempAlerts.forEach(alert => {
                     alert.style.display = 'none';
                 });
-            }, 5000);
+            }, 10000);
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>

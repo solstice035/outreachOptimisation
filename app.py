@@ -26,6 +26,9 @@ from dotenv import load_dotenv
 from forms import LoadForm
 from utils.dataLoadFunction import process_engagement_data
 from utils.database import load_data_to_db
+import matplotlib.pyplot as plt
+import io
+import base64
 
 # ==============================
 #         CONFIGURATION
@@ -79,9 +82,19 @@ def load():
             flash("File loaded successfully. Previewing the first 20 rows.", "success")
             # Show preview of first 20 rows
             df_load = pd.read_excel(file_path)
-            df_preview = df_load.head(20)
+            df_preview = df_load.head(50)
+
+            # Calculate statistics
+            engagement_status_counts = (
+                df_load["Engagement Status"].value_counts().to_dict()
+            )
+            service_line_counts = (
+                df_load["Engagement Partner Service Line"].value_counts().to_dict()
+            )
+
             session["file_path"] = file_path
             session["load_timestamp"] = timestamp
+
             return render_template(
                 "load.html",
                 form=form,
@@ -90,13 +103,17 @@ def load():
                 ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
+                engagement_status_counts=engagement_status_counts,
+                service_line_counts=service_line_counts,
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
             return redirect(url_for("load"))
 
     return render_template("load.html", form=form, service_lines=static_service_lines)
+
     # TODO: #8 Add count for number of rows in the preview file
+    # TODO: #12 Add stats for the file, split by service line and by status
 
 
 # ======== PROCESS ========

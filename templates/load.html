@@ -47,5 +47,22 @@
 <div class="table-responsive">
     {{ table|safe }}
 </div>
+
+<h2>Statistics:</h2>
+<div>
+    <h3>Engagements by Status</h3>
+    <ul>
+        {% for status, count in engagement_status_counts.items() %}
+        <li>{{ status }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Engagements by Service Line</h3>
+    <ul>
+        {% for service_line, count in service_line_counts.items() %}
+        <li>{{ service_line }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endif %}
 {% endblock %}
