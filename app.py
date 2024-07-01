@@ -24,8 +24,8 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from dotenv import load_dotenv
 from forms import UploadForm
-from dataLoadFunction import process_engagement_data
-from database_utils import load_data_to_db
+from utils.dataLoadFunction import process_engagement_data
+from utils.database import load_data_to_db
 
 # ==============================
 #         CONFIGURATION
@@ -36,7 +36,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
-app.config["UPLOAD_FOLDER"] = "uploads"
+app.config["UPLOAD_FOLDER"] = "./data/uploads"
 app.config["LOG_FOLDER"] = "logs"
 
 # Create necessary directories if they don't exist

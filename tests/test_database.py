@@ -2,12 +2,12 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import pandas as pd
 from datetime import datetime
-from database_utils import create_table_if_not_exists, insert_data, load_data_to_db
+from utils.database import create_table_if_not_exists, insert_data, load_data_to_db
 
 
 class TestDatabaseFunctions(unittest.TestCase):
 
-    @patch("database_utils.psycopg2.connect")
+    @patch("utils.database.psycopg2.connect")
     def test_create_table_if_not_exists(self, mock_connect):
         """
         Test creating table if not exists.
@@ -23,7 +23,7 @@ class TestDatabaseFunctions(unittest.TestCase):
             in mock_cursor.execute.call_args[0][0]
         )
 
-    @patch("database_utils.psycopg2.connect")
+    @patch("utils.database.psycopg2.connect")
     def test_insert_data(self, mock_connect):
         """
         Test inserting data into the database.
@@ -62,10 +62,10 @@ class TestDatabaseFunctions(unittest.TestCase):
 
         self.assertEqual(mock_cursor.execute.call_count, len(df))
 
-    @patch("database_utils.psycopg2.connect")
-    @patch("database_utils.create_table_if_not_exists")
-    @patch("database_utils.insert_data")
-    @patch("database_utils.flash")
+    @patch("utils.database.psycopg2.connect")
+    @patch("utils.database.create_table_if_not_exists")
+    @patch("utils.database.insert_data")
+    @patch("utils.database.flash")
     def test_load_data_to_db(
         self, mock_flash, mock_insert_data, mock_create_table, mock_connect
     ):
@@ -115,3 +115,5 @@ class TestDatabaseFunctions(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# to run: python -m unittest discover -s tests -p "test_database_utils.py"
