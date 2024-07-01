@@ -26,6 +26,9 @@ from dotenv import load_dotenv
 from forms import LoadForm
 from utils.dataLoadFunction import process_engagement_data
 from utils.database import load_data_to_db
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -80,17 +83,28 @@ def load():
 
         try:
             flash("File loaded successfully. Previewing the first 20 rows.", "success")
-            # Show preview of first 20 rows
             df_load = pd.read_excel(file_path)
-            df_preview = df_load.head(50)
+            df_preview = df_load.head(20)
 
-            # Calculate statistics
-            engagement_status_counts = (
-                df_load["Engagement Status"].value_counts().to_dict()
-            )
-            service_line_counts = (
-                df_load["Engagement Partner Service Line"].value_counts().to_dict()
-            )
+            # Filter and calculate statistics
+            df_filtered = df_load[df_load["Engagement Status"].notnull()]
+            engagement_status_counts = df_filtered["Engagement Status"].value_counts()
+            service_line_counts = df_filtered[
+                "Engagement Partner Service Line"
+            ].value_counts()
+
+            # Create charts
+            img1 = io.BytesIO()
+            engagement_status_counts.plot(kind="bar", title="Engagements by Status")
+            plt.savefig(img1, format="png")
+            img1.seek(0)
+            chart1_url = base64.b64encode(img1.getvalue()).decode()
+
+            img2 = io.BytesIO()
+            service_line_counts.plot(kind="bar", title="Engagements by Service Line")
+            plt.savefig(img2, format="png")
+            img2.seek(0)
+            chart2_url = base64.b64encode(img2.getvalue()).decode()
 
             session["file_path"] = file_path
             session["load_timestamp"] = timestamp
@@ -103,8 +117,8 @@ def load():
                 ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
-                engagement_status_counts=engagement_status_counts,
-                service_line_counts=service_line_counts,
+                chart1_url=chart1_url,
+                chart2_url=chart2_url,
             )
         except Exception as e:
             flash(f"Error processing file: {str(e)}", "danger")
@@ -226,6 +240,12 @@ def finance_approval():
 @app.route("/reports")
 def reports():
     return render_template("reports.html")
+
+
+# ======== INDEX ========
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 # ======== 404 ========

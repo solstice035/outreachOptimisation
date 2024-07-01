@@ -14,7 +14,6 @@
 </form>
 
 {% if table %}
-<!-- <p>Rows processed: <span class="badge text-bg-primary">{{size_preview}}</span></p> -->
 <form method="POST" action="{{ url_for('process') }}" onsubmit="showLoading()">
     <input type="hidden" name="file_path" value="{{ file_path }}">
     <div class="mb-3">
@@ -49,20 +48,28 @@
 </div>
 
 <h2>Statistics:</h2>
-<div>
-    <h3>Engagements by Status</h3>
-    <ul>
-        {% for status, count in engagement_status_counts.items() %}
-        <li>{{ status }}: {{ count }}</li>
-        {% endfor %}
-    </ul>
-
-    <h3>Engagements by Service Line</h3>
-    <ul>
-        {% for service_line, count in service_line_counts.items() %}
-        <li>{{ service_line }}: {{ count }}</li>
-        {% endfor %}
-    </ul>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Engagements by Status
+            </div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ chart1_url }}" class="img-fluid" alt="Engagements by Status Chart">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Engagements by Service Line
+            </div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ chart2_url }}" class="img-fluid"
+                    alt="Engagements by Service Line Chart">
+            </div>
+        </div>
+    </div>
 </div>
 {% endif %}
 {% endblock %}
