@@ -16,7 +16,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from forms import UploadForm
 from utils.dataLoadFunction import process_engagement_data
-from utils.database_utils import load_data_to_db
+from utils.database import load_data_to_db
 
 # Load environment variables
 load_dotenv()
