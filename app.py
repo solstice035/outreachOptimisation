@@ -1,3 +1,12 @@
+"""
+Module Name: Web Application Routes
+Description: This module defines the routes and associated functionalities for the web application.
+"""
+
+# ==============================
+#         IMPORTS
+# ==============================
+
 import os
 import logging
 import pandas as pd
@@ -18,6 +27,9 @@ from forms import UploadForm
 from utils.dataLoadFunction import process_engagement_data
 from utils.database import load_data_to_db
 
+# ==============================
+#         CONFIGURATION
+# ==============================
 # Load environment variables
 load_dotenv()
 
@@ -38,12 +50,18 @@ logging.basicConfig(
 
 static_service_lines = ["All", "CBS & Elim", "Assurance", "Consulting", "Tax", "SaT"]
 
+# ==============================
+#         ROUTES
+# ==============================
 
+
+# ======== HOME ========
 @app.route("/")
 def home():
     return render_template("home.html")
 
 
+# ======== UPLOAD ========
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     form = UploadForm()
@@ -79,6 +97,7 @@ def upload():
     return render_template("upload.html", form=form, service_lines=static_service_lines)
 
 
+# ======== PROCESS ========
 @app.route("/process", methods=["POST"])
 def process():
     file_path = session.get("file_path")
@@ -146,6 +165,7 @@ def process():
         return redirect(url_for("upload"))
 
 
+# ======== DOWNLOADS ========
 @app.route("/download/<filename>")
 def download(filename):
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -158,31 +178,37 @@ def download_log(filename):
     return send_file(file_path, as_attachment=True)
 
 
+# ======== DELEGATES ========
 @app.route("/delegates")
 def delegates():
     return render_template("delegates.html")
 
 
+# ======== APPLICATION ========
 @app.route("/etc_exception_application")
 def etc_exception_application():
     return render_template("etc_exception_application.html")
 
 
+# ======== EP APPROVAL ========
 @app.route("/ep_approval")
 def ep_approval():
     return render_template("ep_approval.html")
 
 
+# ======== FINANCE APPROVAL ========
 @app.route("/finance_approval")
 def finance_approval():
     return render_template("finance_approval.html")
 
 
+# ======== REPORTS ========
 @app.route("/reports")
 def reports():
     return render_template("reports.html")
 
 
+# ======== 404 ========
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
