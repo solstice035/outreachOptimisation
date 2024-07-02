@@ -27,11 +27,12 @@ from forms import LoadForm
 from utils.dataLoadFunction import process_engagement_data
 from utils.database import load_data_to_db
 import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import seaborn as sns
 import io
 import base64
+
+matplotlib.use("Agg")
 
 # ==============================
 #         CONFIGURATION
@@ -86,25 +87,44 @@ def load():
             df_load = pd.read_excel(file_path)
             df_preview = df_load.head(20)
 
-            # Filter and calculate statistics
-            df_filtered = df_load[df_load["Engagement Status"].notnull()]
-            engagement_status_counts = df_filtered["Engagement Status"].value_counts()
+            # Calculate counts
+            engagement_status_counts = df_load["Engagement Status"].value_counts()
+
+            # Filter the DataFrame for Engagement Status = "Released"
+            df_filtered = df_load[df_load["Engagement Status"] == "Released"]
             service_line_counts = df_filtered[
                 "Engagement Partner Service Line"
             ].value_counts()
 
-            # Create charts
-            img1 = io.BytesIO()
-            engagement_status_counts.plot(kind="bar", title="Engagements by Status")
-            plt.savefig(img1, format="png")
-            img1.seek(0)
-            chart1_url = base64.b64encode(img1.getvalue()).decode()
+            # Set Seaborn style
+            sns.set(style="white")
 
-            img2 = io.BytesIO()
-            service_line_counts.plot(kind="bar", title="Engagements by Service Line")
-            plt.savefig(img2, format="png")
-            img2.seek(0)
-            chart2_url = base64.b64encode(img2.getvalue()).decode()
+            # Create charts
+            def create_bar_chart(data, x_label):
+                plt.figure(figsize=(10, 6))
+                ax = sns.barplot(
+                    x=data.values, y=data.index, palette="viridis", hue=data.index
+                )
+                ax.set(
+                    xlabel=x_label, ylabel=None
+                )  # Remove y-axis label, keep x-axis label
+                ax.set_title("")
+
+                # Add data labels
+                for index, value in enumerate(data.values):
+                    ax.text(value, index, str(value), color="black", ha="left")
+
+                sns.despine(left=True, bottom=True)  # Remove borders
+                img = io.BytesIO()
+                plt.savefig(
+                    img, format="png", bbox_inches="tight"
+                )  # bbox_inches='tight' removes extra borders
+                plt.close()
+                img.seek(0)
+                return base64.b64encode(img.getvalue()).decode()
+
+            chart1_url = create_bar_chart(engagement_status_counts, "Count")
+            chart2_url = create_bar_chart(service_line_counts, "Count")
 
             session["file_path"] = file_path
             session["load_timestamp"] = timestamp
@@ -113,7 +133,7 @@ def load():
                 "load.html",
                 form=form,
                 table=df_preview.style.set_table_attributes(
-                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true"'
+                    'table_id="previewTable" classes="table table-striped table-sm" data-toggle="table" data-pagination="true" data-search="true" data-page-size="5"'
                 ).to_html(),
                 file_path=file_path,
                 service_lines=static_service_lines,
@@ -255,4 +275,6 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
+    # Run the plotting script to generate the plot
+    os.system("python plot.py")
     app.run(debug=True)
